@@ -61,7 +61,7 @@ trait MailerAPI extends MailerApiJavaInterop {
    * like view.Mails.templateText(tags).
    * like view.Mails.templateHtml(tags).
    */
-  def send(bodyText: String, bodyHtml: String): Unit
+  def send(bodyText: String, bodyHtml: String, handler: MultiPartEmail => Unit = ()): Unit
 
   /**
    * Sends an Html email based on the provided data. 
@@ -226,8 +226,9 @@ class CommonsMailer(smtpHost: String,smtpPort: Int,smtpSsl: Boolean, smtpTls: Bo
    * like view.Mails.templateHtml(tags).
    * @return
    */
-  def send(bodyText: String, bodyHtml: String): Unit = {
+  def send(bodyText: String, bodyHtml: String, handler: MultiPartEmail => Unit = ()): Unit = {
     val email = createEmailer(bodyText,bodyHtml)
+    handler(email)
     email.setCharset(e("charset").headOption.getOrElse("utf-8"))
     email.setSubject(e("subject").headOption.getOrElse(""))
     e("from").foreach(setAddress(_) { (address, name) => email.setFrom(address, name) })
@@ -298,7 +299,7 @@ class CommonsMailer(smtpHost: String,smtpPort: Int,smtpSsl: Boolean, smtpTls: Bo
 
 case object MockMailer extends MailerBuilder {
 
-  def send(bodyText: String, bodyHtml: String): Unit = {
+  def send(bodyText: String, bodyHtml: String, handler: MultiPartEmail => Unit = ()): Unit = {
     Logger.info("MOCK MAILER: send email")
     e("from").foreach(from => Logger.info("FROM:" + from))
     e("replyTo").foreach(replyTo => Logger.info("REPLYTO:" + replyTo))
